@@ -8,7 +8,8 @@
 int main(){
 
     while(1){
-        
+        printf("ITERATING THROUGH WHILE LOOP\n");
+        printf("ps1 var is \u@\h:\W> \n");
         char input[MAX];
         char checkExit[MAX] = "exit";
 

@@ -38,10 +38,13 @@ int execCmds(char * args[]){
 return 1;
 }
 
-void loop(void) { 
+void loop(void) {
+    // string for user input
     char line[MAX]; 
+    //  max amount of arguments
     char * tokens[MAX];
-    char ** args;
+    // arg count
+    char ** argCount;
 
     int numTokens;
 
@@ -49,12 +52,12 @@ void loop(void) {
     while(1){
         display_prompt();
 
-        // We empty the line buffer
+        // resets the buffer
 		memset( line, '\0', MAX );
 
         fgets(line, MAX, stdin);
 
-        // If nothing is written, the loop is executed again
+        // tokenizes the string
 		if((tokens[0] = strtok(line," \n\t")) == NULL) continue;
 
         numTokens = 1;
@@ -63,20 +66,6 @@ void loop(void) {
 		execCmds(tokens);
     }
 }
-
-int main(int argc, char** argv) { 
-    loop();
-
-    return 0;
-}
-
-// Function to print Current Directory. 
-void printDirectory() 
-{ 
-    char cwd[1024]; 
-    getcwd(cwd, sizeof(cwd)); 
-    printf("\n%s$ ", cwd); 
-} 
 
 void display_prompt(){
     // check if the ps1 variable is set
@@ -88,3 +77,10 @@ void display_prompt(){
         printf("%s", getenv("PS1"));
     }
 }
+
+int main(int argc, char** argv) {
+    loop();
+    return 0;
+}
+
+

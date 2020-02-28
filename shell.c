@@ -5,17 +5,62 @@
 #include<sys/types.h> 
 #include<sys/wait.h> 
   
-#define MAXLINE 1000 // max number of letters to be supported 
+#define MAX 100 // max number of letters to be supported 
+
+int changeDirectory(char* args[]){
+	// cd goes to home 
+	if (args[1] == NULL) {
+		chdir(getenv("HOME")); 
+		return 1;
+	}
+    //cd goes to speciic place if exists
+	else{ 
+		if (chdir(args[1]) == -1) {
+			printf("-bash: cd: %s No such file or directory\n", args[1]);
+            return -1;
+		}
+	}
+	return 0;
+}
+
+/**
+* Method execute commands entered 
+*/ 
+int execCmds(char * args[]){
+	
+	// exit shell 
+	if(strcmp(args[0],"exit") == 0) {
+        exit(0);
+    } 
+	// 'cd' command to change directory
+	else if (strcmp(args[0],"cd") == 0) changeDirectory(args);
+
+return 1;
+}
 
 void loop(void) { 
-    char line[MAXLINE]; 
+    char line[MAX]; 
+    char * tokens[MAX];
     char ** args;
-    int status; 
+
+    int numTokens;
 
     //reads parses, and executes commands
     while(1){
-        printDirectory();
-        fgets(line, MAXLINE, stdin);
+        display_prompt();
+
+        // We empty the line buffer
+		memset( line, '\0', MAX );
+
+        fgets(line, MAX, stdin);
+
+        // If nothing is written, the loop is executed again
+		if((tokens[0] = strtok(line," \n\t")) == NULL) continue;
+
+        numTokens = 1;
+		while((tokens[numTokens] = strtok(NULL, " \n\t")) != NULL) numTokens++;
+		
+		execCmds(tokens);
     }
 }
 
@@ -32,4 +77,14 @@ void printDirectory()
     getcwd(cwd, sizeof(cwd)); 
     printf("\n%s$ ", cwd); 
 } 
-  
+
+void display_prompt(){
+    // check if the ps1 variable is set
+    // if its not set, print '$'
+    if(!getenv("PS1")){
+        printf("$");
+    }
+    else{
+        printf("%s", getenv("PS1"));
+    }
+}

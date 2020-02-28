@@ -2,46 +2,34 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include<sys/types.h> 
+#include<sys/wait.h> 
+  
+#define MAXLINE 1000 // max number of letters to be supported 
 
+void loop(void) { 
+    char line[MAXLINE]; 
+    char ** args;
+    int status; 
 
-#define MAX 50 
-
-int main(){
-    printf("RESULT IS \n");
-    char* userName;
-    getlogin_r(userName, sizeof(userName));
-    printf("%s\n",userName);
-
+    //reads parses, and executes commands
     while(1){
-        printf("ITERATING THROUGH WHILE LOOP\n");
-        //printf("ps1 var is \u@\h:\W> \n");
-        char input[MAX];
-        char checkExit[MAX] = "exit";
-
-        int result;
-
-        //input = malloc (sizeof (char) * MAX);
-        fgets(input, MAX, stdin);
-        
-        result = strcmp(input, checkExit);
-
-        //printf("strcmp(str1, str3) = %s %d\n", input, result);
-
-        if (strcmp(input, checkExit) == 10){
-            printf("Duck you = ");
-            break;
-            exit(0);
-        }
+        printDirectory();
+        fgets(line, MAXLINE, stdin);
     }
+}
+
+int main(int argc, char** argv) { 
+    loop();
+
     return 0;
 }
 
-char *readInput() {
-
-	char *input;
-	input = malloc (sizeof (char) * MAX);
-	fgets(input, MAX, stdin);
-
-	return input;
-
-}
+// Function to print Current Directory. 
+void printDirectory() 
+{ 
+    char cwd[1024]; 
+    getcwd(cwd, sizeof(cwd)); 
+    printf("\n%s$ ", cwd); 
+} 
+  

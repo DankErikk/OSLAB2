@@ -8,10 +8,11 @@
 #define MAX 100 // max number of letters to be supported 
 
 int changeDirectory(char* args[]){
-	// cd goes to home 
+
+	// cd goes to home when no directory is written
 	if (args[1] == NULL) {
 		chdir(getenv("HOME")); 
-		return 1;
+		return 0;
 	}
     //cd goes to speciic place if exists
 	else{ 
@@ -27,44 +28,43 @@ int changeDirectory(char* args[]){
 * Method execute commands entered 
 */ 
 int execCmds(char * args[]){
-	
-	// exit shell 
-	if(strcmp(args[0],"exit") == 0) {
-        exit(0);
-    } 
-	// 'cd' command to change directory
-	else if (strcmp(args[0],"cd") == 0) changeDirectory(args);
 
-return 1;
-}
+    pid_t pid;
+    int status;
 
-void loop(void) {
-    // string for user input
-    char line[MAX]; 
-    //  max amount of arguments
-    char * tokens[MAX];
-    // arg count
-    char ** argCount;
-
-    int numTokens;
-
-    //reads parses, and executes commands
-    while(1){
-        display_prompt();
-
-        // resets the buffer
-		memset( line, '\0', MAX );
-
-        fgets(line, MAX, stdin);
-
-        // tokenizes the string
-		if((tokens[0] = strtok(line," \n\t")) == NULL) continue;
-
-        numTokens = 1;
-		while((tokens[numTokens] = strtok(NULL, " \n\t")) != NULL) numTokens++;
-		
-		execCmds(tokens);
+    if((pid= fork()) < 0){
+        printf("Error forking!\n");
+        return -1;
     }
+    else if(pid==0){ // child
+
+        //printf("CHILD PID: %d\n", getpid());
+
+        // exit shell if first argument is 0
+        if(strcmp(args[0],"exit") == 0) {
+            exit(0);
+        } 
+        // 'cd' command to change directory
+        else if (strcmp(args[0],"cd") == 0) {
+            return changeDirectory(args);
+        }
+
+        else if(execvp(*args,args) < 0){
+            printf("Error executing command!\n");
+            return -1;
+        }
+        else{
+            //printf("args:%s", *args);
+            return 0;
+        }
+    }
+    else{ // parent
+
+        // makes the parent wait until the child is done
+        //printf("PARENT PID: %d\n", getpid());
+        wait(NULL);
+    }
+
 }
 
 void display_prompt(){
@@ -77,6 +77,39 @@ void display_prompt(){
         printf("%s", getenv("PS1"));
     }
 }
+
+void loop(void) {
+    // string for user input
+    char line[MAX]; 
+    //  max amount of arguments
+    char * tokens[MAX];
+    // arg count
+    char ** argCount;
+
+    int numTokens;
+    int returnStatus;
+
+    //reads parses, and executes commands
+    while(1){
+        display_prompt();
+        // resets the buffer and get it
+		memset( line, '\0', MAX );
+        fgets(line, MAX, stdin);
+
+        // tokenizes the string
+		if((tokens[0] = strtok(line," \n\t")) == NULL) continue;
+
+        // count the number of tokens
+        numTokens = 1;
+		while((tokens[numTokens] = strtok(NULL, " \n\t")) != NULL) numTokens++;
+         
+
+		returnStatus = execCmds(tokens);
+        printf("Command returned with status:%d\n", returnStatus);
+    }
+}
+
+
 
 int main(int argc, char** argv) {
     loop();

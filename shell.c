@@ -20,16 +20,30 @@ int changeDirectory(char* args[]){
 			printf("-bash: cd: %s No such file or directory\n", args[1]);
             return -1;
 		}
+        else{
+            return 0;
+        }
 	}
 	return 0;
 }
 
+void runCommand(char** args){
+    int returnStatus = execvp(*args, args);
+    if(returnStatus<0){
+        printf("%s: command not found\n", *args);
+        exit(-1);
+    }
+    else{
+        exit(0);
+    }
+}
 /**
 * Method execute commands entered 
 */ 
 int execCmds(char * args[]){
 
     pid_t pid;
+    int exitFlag;
     int status;
 
     if((pid= fork()) < 0){
@@ -38,30 +52,29 @@ int execCmds(char * args[]){
     }
     else if(pid==0){ // child
 
-        //printf("CHILD PID: %d\n", getpid());
+        printf("CHILD PID: %d\n", getpid());
 
-        // exit shell if first argument is 0
-        if(strcmp(args[0],"exit") == 0) {
-            exit(0);
-        } 
         // 'cd' command to change directory
-        else if (strcmp(args[0],"cd") == 0) {
-            return changeDirectory(args);
-        }
-
-        else if(execvp(*args,args) < 0){
-            printf("Error executing command!\n");
-            return -1;
+        if (strcmp(args[0],"cd") == 0) {
+            changeDirectory(args);
         }
         else{
-            //printf("args:%s", *args);
-            return 0;
-        }
+            runCommand(args);
+        } 
+        printf("END OF ELSE STATEMENTS THIS SHOULD NOT BE PRINTED");
     }
     else{ // parent
 
         // makes the parent wait until the child is done
-        //printf("PARENT PID: %d\n", getpid());
+        printf("PARENT PID: %d\n", getpid());
+        int status;
+        if ( waitpid(pid, &status, 0) == -1 ) {
+            printf("waitpid failed\n");
+            return EXIT_FAILURE;
+        }
+        if ( WIFEXITED(status) ) {
+            printf("exit status was %d\n", WEXITSTATUS(status));
+        }
         wait(NULL);
     }
 
@@ -96,16 +109,28 @@ void loop(void) {
 		memset( line, '\0', MAX );
         fgets(line, MAX, stdin);
 
+        // check if exit was typed
+
         // tokenizes the string
 		if((tokens[0] = strtok(line," \n\t")) == NULL) continue;
 
         // count the number of tokens
         numTokens = 1;
 		while((tokens[numTokens] = strtok(NULL, " \n\t")) != NULL) numTokens++;
-         
+        
+        // check if exit was typed
+        if(strcmp(tokens[0], "exit") == 0){
+            printf("Exiting...\n");
+            exit(0);
+        }
+        if(strcmp(tokens[0], "cd") == 0){
+            int status = changeDirectory(tokens);
+            printf("exit status was %d\n", status);
+            continue;
+
+        }
 
 		returnStatus = execCmds(tokens);
-        printf("Command returned with status:%d\n", returnStatus);
     }
 }
 

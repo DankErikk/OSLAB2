@@ -37,6 +37,7 @@ void runCommand(char** args){
         exit(0);
     }
 }
+
 /**
 * Method execute commands entered 
 */ 
@@ -52,7 +53,7 @@ int execCmds(char * args[]){
     }
     else if(pid==0){ // child
 
-        printf("CHILD PID: %d\n", getpid());
+        //printf("CHILD PID: %d\n", getpid());
 
         // 'cd' command to change directory
         if (strcmp(args[0],"cd") == 0) {
@@ -66,7 +67,7 @@ int execCmds(char * args[]){
     else{ // parent
 
         // makes the parent wait until the child is done
-        printf("PARENT PID: %d\n", getpid());
+        // printf("PARENT PID: %d\n", getpid());
         int status;
         if ( waitpid(pid, &status, 0) == -1 ) {
             printf("waitpid failed\n");
@@ -117,7 +118,7 @@ void loop(void) {
         // count the number of tokens
         numTokens = 1;
 		while((tokens[numTokens] = strtok(NULL, " \n\t")) != NULL) numTokens++;
-        printf("numTokens is %d\n", numTokens);
+        //printf("numTokens is %d\n", numTokens);
         
         // check if exit was typed
         if(strcmp(tokens[0], "exit") == 0){
@@ -130,23 +131,27 @@ void loop(void) {
             if (status == -1){
                 printf("Program terminated with exit code %d\n", status);
             }
-            printf("exit status was %d\n", status);
+            //printf("exit status was %d\n", status);
             continue;
         }
+
         // check if there is an ampersand at the end of the command
         // this will indicate it to run in the background
         if(strcmp(tokens[numTokens-1], "&") == 0 ){
+
             // move terminator one value back
             tokens[numTokens-1] = tokens[numTokens];
 
             pid_t pid;
             int exitFlag;
             int status;
+
             // run the command as a child process
             if((pid= fork()) < 0){
                 printf("Error forking!\n");
                 continue;
             }
+
             else if(pid==0){ // child
 
                 //printf("CHILD PID: %d\n", getpid());
@@ -162,9 +167,8 @@ void loop(void) {
                 } 
                 //printf("END OF ELSE STATEMENTS THIS SHOULD NOT BE PRINTED");
             }
-            else{ // parent
 
-                // makes the parent wait until the child is done
+            else{ // parent
                 //printf("PARENT PID: %d\n", getpid());
                 int status;
                 if ( waitpid(pid, &status, 0) == -1 ) {
@@ -177,9 +181,7 @@ void loop(void) {
                 // remove the wait and have the loop continue so that the command can run in the background
                 continue;
             }
-
         }
-        
 
 		execCmds(tokens);
     }

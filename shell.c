@@ -72,8 +72,8 @@ int execCmds(char * args[]){
             printf("waitpid failed\n");
             return EXIT_FAILURE;
         }
-        if ( WIFEXITED(status) ) {
-            printf("exit status was %d\n", WEXITSTATUS(status));
+        if (WIFEXITED(status)) {
+            printf("Program terminated with exit code %d\n", WEXITSTATUS(status));
         }
         wait(NULL);
     }
@@ -125,6 +125,9 @@ void loop(void) {
         }
         if(strcmp(tokens[0], "cd") == 0){
             int status = changeDirectory(tokens);
+            if (status = -1){
+                printf("Program terminated with exit code %d\n", status);
+            }
             printf("exit status was %d\n", status);
             continue;
 

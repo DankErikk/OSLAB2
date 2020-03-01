@@ -127,7 +127,7 @@ void loop(void) {
         // check if user typed in cd
         if(strcmp(tokens[0], "cd") == 0){
             int status = changeDirectory(tokens);
-            if (status = -1){
+            if (status == -1){
                 printf("Program terminated with exit code %d\n", status);
             }
             printf("exit status was %d\n", status);

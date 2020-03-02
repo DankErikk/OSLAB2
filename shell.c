@@ -7,6 +7,134 @@
   
 #define MAX 100 // max number of letters to be supported 
 
+/**
+* Method used to manage the "|" character. This method will seperate the 
+* commands before and after the "|" and a pipe will be used to store the 
+* process of the commands before the "|" so that the command after the "|"
+* can be executed on the first command.
+*/ 
+void execPipe(char * tokens[]){
+	int processOne[2]; 
+	int processTwo[2];
+	
+	int numCmnds = 0;
+	
+	char *cmnd[256];
+	
+	pid_t pid;
+	
+	int end = 0;
+	int i = 0;
+	int j = 0;
+	int k = 0;
+	int l = 0;
+	
+	// Calculate the number of commands 
+	while (tokens[l] != NULL){
+		if (strcmp(tokens[l],"|") == 0){
+			numCmnds++;
+		}
+		l++;
+	}
+	numCmnds++;
+	
+    // Will account for the commands before and after the "|",
+    // there will be an input and output to be executed after 
+    // processing is done 
+	while (tokens[j] != NULL && end != 1){
+		k = 0;
+		
+        //Stores commands
+		while (strcmp(tokens[j],"|") != 0){
+			cmnd[k] = tokens[j];
+			j++;	
+			if (tokens[j] == NULL){
+				end = 1;
+				k++;
+				break;
+			}
+			k++;
+		}
+
+        //Needed to find the end 
+		cmnd[k] = NULL;
+		j++;		
+		
+        // Helps keep track of pipes inputs and output so that it can be connected 
+		if (i % 2 != 0){
+			pipe(processOne); 
+		}else{
+			pipe(processTwo); 
+		}
+		
+		pid=fork();
+		
+		if(pid==-1){			
+			if (i != numCmnds - 1){
+				if (i % 2 != 0){
+					close(processOne[1]); 
+				}else{
+					close(processTwo[1]); 
+				} 
+			}			
+			printf("Child Process Failed\n");
+			return;
+		}
+		if(pid==0){
+			if (i == 0){
+				dup2(processTwo[1], STDOUT_FILENO);
+			}
+
+            // On the last command, replace the input but sabe the output
+			else if (i == numCmnds - 1){
+				if (numCmnds % 2 != 0){ 
+					dup2(processOne[0],STDIN_FILENO);
+				}else{ 
+					dup2(processTwo[0],STDIN_FILENO);
+				}
+
+            // Uses two pipes for input and output, respectively, saves the position
+			}else{ 
+				if (i % 2 != 0){
+					dup2(processTwo[0],STDIN_FILENO); 
+					dup2(processOne[1],STDOUT_FILENO);
+				}else{ 
+					dup2(processOne[0],STDIN_FILENO); 
+					dup2(processTwo[1],STDOUT_FILENO);					
+				} 
+			}
+            
+			if (execvp(cmnd[0],cmnd) == -1){
+				kill(getpid(),SIGTERM);
+			}		
+		}
+				
+		// closing processes
+		if (i == 0){
+			close(processTwo[1]);
+		}
+		else if (i == numCmnds - 1){
+			if (numCmnds % 2 != 0){					
+				close(processOne[0]);
+			}else{					
+				close(processTwo[0]);
+			}
+		}else{
+			if (i % 2 != 0){					
+				close(processTwo[0]);
+				close(processOne[1]);
+			}else{					
+				close(processOne[0]);
+				close(processTwo[1]);
+			}
+		}
+				
+		waitpid(pid,NULL,0);
+				
+		i++;	
+	}
+}
+
 int changeDirectory(char* args[]){
 
 	// cd goes to home when no directory is written
@@ -132,6 +260,12 @@ void loop(void) {
                 printf("Program terminated with exit code %d\n", status);
             }
             //printf("exit status was %d\n", status);
+            continue;
+        }
+
+        // Takes care of "|"
+        if (numTokens >= 2 && strcmp(tokens[1],"|") == 0){
+            execPipe(tokens);
             continue;
         }
 

@@ -4,7 +4,8 @@
 #include <unistd.h>
 #include<sys/types.h> 
 #include<sys/wait.h> 
-  
+#include <sys/stat.h>
+#include <fcntl.h>
 #define MAX 100 // max number of letters to be supported 
 
 /**
@@ -135,6 +136,9 @@ void execPipe(char * tokens[]){
 	}
 }
 
+/** 
+ * Method used to change directory 
+ */
 int changeDirectory(char* args[]){
 
 	// cd goes to home when no directory is written
@@ -155,6 +159,9 @@ int changeDirectory(char* args[]){
 	return 0;
 }
 
+/**
+ * Helper function to account for commands
+ */
 void runCommand(char** args){
     int returnStatus = execvp(*args, args);
     if(returnStatus<0){
@@ -209,6 +216,9 @@ int execCmds(char * args[]){
 
 }
 
+/**
+ *  Displays the "$" unless otherwise stated
+ */ 
 void display_prompt(){
     // check if the ps1 variable is set
     // if its not set, print '$'
@@ -220,9 +230,13 @@ void display_prompt(){
     }
 }
 
+/**
+ *  Infintite loop to take in user commands
+ */ 
 void loop(void) {
     // string for user input
     char line[MAX]; 
+
     //  max amount of arguments
     char * tokens[MAX];
     // arg count
@@ -230,6 +244,8 @@ void loop(void) {
 
     int numTokens;
     int returnStatus;
+    int nameOfFile;
+    int standardOut;
 
     //reads parses, and executes commands
     while(1){
@@ -262,6 +278,22 @@ void loop(void) {
             //printf("exit status was %d\n", status);
             continue;
         }
+
+        //Account for the ">" command, makes a new file 
+        //(Hardcoded for the moment, so the > has to be the second token and the name
+        //must be on the third token)
+        if ( (numTokens >= 2) && (strcmp(tokens[1],">") == 0)){
+                //Determines the file name 
+				nameOfFile = open(tokens[2], O_CREAT | O_TRUNC | O_WRONLY, 0600); 
+				//Needed to swap 
+				standardOut = dup(STDOUT_FILENO); 	
+
+				dup2(nameOfFile, STDOUT_FILENO); 
+				close(nameOfFile);
+                //What will be in the file name 
+				printf("%d\n", STDOUT_FILENO);
+				dup2(standardOut, STDOUT_FILENO);
+			}
 
         // Takes care of "|"
         if (numTokens >= 2 && strcmp(tokens[1],"|") == 0){
@@ -321,11 +353,7 @@ void loop(void) {
     }
 }
 
-
-
 int main(int argc, char** argv) {
     loop();
     return 0;
 }
-
-
